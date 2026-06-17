@@ -1,0 +1,42 @@
+"""
+GameView - 游戏视图抽象基类
+
+每个视图处理特定游戏画面的所有逻辑。
+GameWindow 只是画布，不参与任何逻辑决策。
+"""
+from abc import ABC, abstractmethod
+
+
+class GameView(ABC):
+    """视图基类。定义视图生命周期和核心接口。
+
+    子类必须实现:
+        handle_input(cmd) -> None   处理原始用户输入
+        get_render_data() -> dict   返回渲染数据给 GameWindow
+    """
+
+    view_id: str = ""
+
+    @abstractmethod
+    def handle_input(self, cmd: dict) -> None:
+        """处理原始用户输入，由视图自行解读并生成游戏 Command。
+
+        Args:
+            cmd: 原始输入 dict，包含 type, x, y, button 或 key 等字段。
+        """
+        ...
+
+    @abstractmethod
+    def get_render_data(self) -> dict:
+        """返回当前帧的渲染数据，将直接推送给 GameWindow 绘制。
+
+        Returns:
+            dict 包含 entities, ui_overlay 等绘制所需的数据。
+        """
+        ...
+
+    def on_enter(self) -> None:
+        """视图激活时调用，可用于初始化状态、加载资源等。"""
+
+    def on_exit(self) -> None:
+        """视图停用时调用，可用于清理状态、保存进度等。"""
