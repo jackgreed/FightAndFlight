@@ -13,8 +13,11 @@ MainWindowLogic - 视图管理器
 from PyQt5.QtCore import QObject
 
 from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView
-
-
+from engine.game_loop import GameLoopThread
+import game.components as game_components
+import game.systems as game_systems
+import ecs
+import game.components
 class MainWindowLogic(QObject):
     """UI <-> 游戏逻辑 的中介层，同时管理视图切换。"""
 
@@ -23,23 +26,46 @@ class MainWindowLogic(QObject):
         self.main_window = main_window
         self.game_window = main_window.left_widget
 
+        
+        self._active_view: GameView | None = None
+        self.game_loop=GameLoopThread(fps=30)
+        self.game_loop.world_manager.create_world("colony_main")
+        self.game_loop.world_manager.set_active_world("colony_main")
+        self.game_loop.add_system(game_systems.MovementSystem())
+        self.game_loop.tick_completed.connect(self._on_tick)
         # 视图注册表
         self._views: dict[str, GameView] = {
-            "colony": ColonyView(),
-            "combat": CombatView(),
-            "diplomacy": DiplomacyView(),
-            "loot": LootView(),
+            "colony": ColonyView(self),
+            #"combat": CombatView(self.game_loop),
+            #"diplomacy": DiplomacyView(self.game_loop),
+            #"loot": LootView(self.game_loop),
         }
-        self._active_view: GameView | None = None
-
+        for view in self._views.values():
+            view.set_command_queue(self.game_loop.command_queue)
+    
         self._connect_signals()
         self._connect_buttons()
-
+        """
+        test code
+        """
+        world=self.game_loop.world_manager.get_active_world()
+        if world:
+            entity=world.create_entity(name="test")
+            entity.add_component(game.components.PositionComp(2,2))
+            entity.add_component(game.components.SpriteComp())
+        
+        """
+        test code
+        """
         # 默认进入殖民地视图
         self._switch_view("colony")
+        self.game_loop.start()
 
     # ─── 信号连接 ─────────────────────────────────────────────────
-
+    def _on_tick(self, snapshot: dict):
+        if self._active_view is not None:
+            self._active_view.set_world_snapshot(snapshot)
+        self._push_render_data()
     def _connect_signals(self):
         """GameWindow 原始输入 → 路由到激活的视图。"""
         self.game_window.player_command.connect(self._on_player_command)
@@ -82,5 +108,9 @@ class MainWindowLogic(QObject):
         """从激活的视图获取渲染数据，推送到 GameWindow。"""
         if self._active_view is None:
             return
+        self._active_view.set_viewport_size(
+            self.game_window.width(),
+            self.game_window.height()
+        )
         data = self._active_view.get_render_data()
         self.game_window.on_render_data(data)

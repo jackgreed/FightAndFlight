@@ -4,6 +4,9 @@ from typing import Any
 from ecs.world import World
 class Command(ABC):
     @abstractmethod
+    def __init__(self,world_id:str,*args,**kwargs):
+        self.world_id=world_id
+    @abstractmethod
     def execute(self,world:World):
         ...
     @abstractmethod

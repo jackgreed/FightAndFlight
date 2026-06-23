@@ -5,7 +5,7 @@ GameView - 游戏视图抽象基类
 GameWindow 只是画布，不参与任何逻辑决策。
 """
 from abc import ABC, abstractmethod
-
+TILE_SIZE=32
 
 class GameView(ABC):
     """视图基类。定义视图生命周期和核心接口。
@@ -16,7 +16,16 @@ class GameView(ABC):
     """
 
     view_id: str = ""
-
+    def __init__(self):
+        self._command_queue = None
+        self._world_snapshot:dict={}
+        self._viewport_size=None
+    def set_viewport_size(self,width:int,height:int):
+        self._viewport_size=(width,height)
+    def set_command_queue(self,queue):
+        self._command_queue = queue
+    def set_world_snapshot(self,snapshot:dict):
+        self._world_snapshot = snapshot
     @abstractmethod
     def handle_input(self, cmd: dict) -> None:
         """处理原始用户输入，由视图自行解读并生成游戏 Command。

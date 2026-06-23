@@ -59,19 +59,19 @@ class MainWindow(QMainWindow):
 
         self.battle_button = QPushButton("BATTLE")
         self.battle_button.setStyleSheet(BUTTON_STYLE)
-        self.battle_button.setCursor(Qt.PointingHandCursor)
+        self.battle_button.setCursor(Qt.PointingHandCursor)#type:ignore
 
         self.home_button = QPushButton("HOME")
         self.home_button.setStyleSheet(BUTTON_STYLE)
-        self.home_button.setCursor(Qt.PointingHandCursor)
+        self.home_button.setCursor(Qt.PointingHandCursor)#type:ignore
 
         self.inventory_button = QPushButton("INVENTORY")
         self.inventory_button.setStyleSheet(BUTTON_STYLE)
-        self.inventory_button.setCursor(Qt.PointingHandCursor)
+        self.inventory_button.setCursor(Qt.PointingHandCursor)#type:ignore
 
         self.allies_button = QPushButton("ALLIES")
         self.allies_button.setStyleSheet(BUTTON_STYLE)
-        self.allies_button.setCursor(Qt.PointingHandCursor)
+        self.allies_button.setCursor(Qt.PointingHandCursor)#type:ignore
 
         self.right_layout.addStretch()
         self.right_layout.addWidget(self.battle_button)
