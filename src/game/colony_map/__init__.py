@@ -1,0 +1,1 @@
+from game.colony_map.generator import ColonyMapGenerator

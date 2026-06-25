@@ -4,6 +4,7 @@ ColonyView - 战棋殖民视图
 处理殖民逻辑：建筑建造、资源管理、单位生产等。
 """
 from logic.views.base import GameView
+from game.commands import MovementCommand
 TILE_SIZE=32
 
 class ColonyView(GameView):
@@ -17,17 +18,31 @@ class ColonyView(GameView):
         self.zoom_level = 1.0
         self.mouse_pressed = False
         self.last_mouse_pos = None
+        self.selected_entity_id=None
     def handle_input(self, cmd: dict) -> None:
         """处理殖民视图下的用户输入。
 
         TODO: 实现殖民操作逻辑（建造建筑、管理资源、生产单位等）
         """
-        print(f"ColonyView received input: {cmd}")
         cmd_type = cmd.get("type")
         
         if cmd_type == "mouse_press":
-            # 处理鼠标点击事件            
-            if "pos" in cmd and cmd["button"]==3:
+            # 处理鼠标点击事件   
+            if "pos" in cmd and cmd.get("button")=="left":
+                grid=self._screen_to_grid(cmd["pos"])
+                self.selected_entity_id = self._get_entity_at_grid(grid)
+            if "pos" in cmd and cmd.get("button")=="right":
+                if self.selected_entity_id is not None and self._command_queue is not None:
+                    grid=self._screen_to_grid(cmd["pos"])
+                    self._command_queue.push(
+                        MovementCommand(
+                            self.world_id,
+                            self.selected_entity_id,
+                            grid[0],
+                            grid[1],
+                        )
+                    )
+            if "pos" in cmd and cmd.get("button")=="middle":
                 self.mouse_pressed = True
                 self.last_mouse_pos = cmd["pos"]
         elif cmd_type == "mouse_move":
@@ -53,6 +68,7 @@ class ColonyView(GameView):
                     self.zoom_level *= 1.1  # 放大
                 if delta < 0:
                     self.zoom_level /= 1.1  # 缩小
+                self.zoom_level = max(0.25, min(self.zoom_level, 4.0))
         else:
             print(f"Unknown input type: {cmd_type}")
         pass
@@ -107,6 +123,7 @@ class ColonyView(GameView):
                 "screen_size": screen_size,
                 "image_path": sprite.get("image_path", ""),
                 "decoration_set": sprite.get("decoration_set", []),
+                "is_selected":entity_id==self.selected_entity_id,
             })
         return {
                 "view": "colony",
@@ -120,8 +137,34 @@ class ColonyView(GameView):
         """进入殖民视图。"""
         self.current_pos = (0, 0)
         self.zoom_level = 1.0
+        self.selected_entity_id=None
         pass
 
     def on_exit(self) -> None:
         """离开殖民视图。"""
         pass
+    def _screen_to_grid(self,pos:tuple[int,int])->tuple[int,int]:
+        """
+        transform screen x,y to world x,y
+        """
+        if self.zoom_level <= 0:
+            return (0, 0)
+        screen_x,screen_y=pos
+        world_x=self.current_pos[0]+screen_x/self.zoom_level
+        world_y=self.current_pos[1]+screen_y/self.zoom_level
+        return (int(world_x//TILE_SIZE),int(world_y//TILE_SIZE))
+    def _get_entity_at_grid(self,grid:tuple[int,int])->str|None:
+        """
+        find the entity_id accroding to the given pos
+        """
+        world_snapshot=self._world_snapshot.get(self.world_id,{})
+        entities=world_snapshot.get("entities",{})
+        for entity_id,entity_data in entities.items():
+            components=entity_data.get("components",{})
+            pos=components.get("PositionComp")
+            sprite=components.get("SpriteComp")
+            if pos is None or sprite is None:
+                continue
+            if int(pos["x"])==grid[0] and int(pos["y"])==grid[1]:
+                return entity_id
+        return None

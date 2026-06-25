@@ -14,10 +14,7 @@ from PyQt5.QtCore import QObject
 
 from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView
 from engine.game_loop import GameLoopThread
-import game.components as game_components
 import game.systems as game_systems
-import ecs
-import game.components
 class MainWindowLogic(QObject):
     """UI <-> 游戏逻辑 的中介层，同时管理视图切换。"""
 
@@ -42,21 +39,21 @@ class MainWindowLogic(QObject):
         }
         for view in self._views.values():
             view.set_command_queue(self.game_loop.command_queue)
-    
+        """
+        test code
+        """
+        import game.components
+        world = self.game_loop.world_manager.get_active_world()
+        if world:
+            entity = world.create_entity(name="test")
+            entity.add_component(game.components.PositionComp(2, 2))
+            entity.add_component(game.components.SpriteComp())
+            entity.add_component(game.components.AttributeComp(speed=0.1))
+        """
+        test code
+        """
         self._connect_signals()
         self._connect_buttons()
-        """
-        test code
-        """
-        world=self.game_loop.world_manager.get_active_world()
-        if world:
-            entity=world.create_entity(name="test")
-            entity.add_component(game.components.PositionComp(2,2))
-            entity.add_component(game.components.SpriteComp())
-        
-        """
-        test code
-        """
         # 默认进入殖民地视图
         self._switch_view("colony")
         self.game_loop.start()
