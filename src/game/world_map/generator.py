@@ -3,7 +3,7 @@ from ecs.world import World
 from game.components import PositionComp, WorldTileComp
 class WorldMapGenerator:
     "generate a World map"
-    def __init__(self,world:World,size:tuple[int,int],noise_level:dict[str,int],seed=42):
+    def __init__(self,world:World,size:tuple[int,int],noise_level:dict[str,float],seed=42):
         """
         we will need 4 paraments for noise level,
         they are :elevation,moisture,temperature,mineral
@@ -67,7 +67,7 @@ class WorldMapGenerator:
     def _clamp(self,num:float):
         return min(max(num,0),1)
 
-    def _noise_generator(self,size:tuple[int,int],noise_level:int,seed:int):
+    def _noise_generator(self,size:tuple[int,int],noise_level:float,seed:int):
         noise_x=size[0]
         noise_y=size[1]
         if noise_x<=0 or noise_y <=0:

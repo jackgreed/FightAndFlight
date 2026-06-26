@@ -1,0 +1,1 @@
+from game.map_initializer.initializer import MapInitializer

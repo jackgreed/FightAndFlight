@@ -11,10 +11,11 @@ MainWindowLogic - 视图管理器
   按钮点击 → MainWindowLogic → old_view.on_exit() → 切换 → new_view.on_enter()
 """
 from PyQt5.QtCore import QObject
-
+import random
 from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView
 from engine.game_loop import GameLoopThread
 import game.systems as game_systems
+from game.map_initializer import MapInitializer
 class MainWindowLogic(QObject):
     """UI <-> 游戏逻辑 的中介层，同时管理视图切换。"""
 
@@ -26,8 +27,6 @@ class MainWindowLogic(QObject):
         
         self._active_view: GameView | None = None
         self.game_loop=GameLoopThread(fps=30)
-        self.game_loop.world_manager.create_world("colony_main")
-        self.game_loop.world_manager.set_active_world("colony_main")
         self.game_loop.add_system(game_systems.MovementSystem())
         self.game_loop.tick_completed.connect(self._on_tick)
         # 视图注册表
@@ -39,18 +38,39 @@ class MainWindowLogic(QObject):
         }
         for view in self._views.values():
             view.set_command_queue(self.game_loop.command_queue)
+        initer=MapInitializer(self.game_loop.world_manager)
+        self.world_map_seed=random.randint(1,2**32-1)
+        self.world_map=initer.initialize_specific_world_map(
+            size=(11,11),
+            noise_level={
+                "elevation":2,
+                "moisture":3,
+                "temperature":4,
+                "mineral":2
+            },
+            #TODO ask user to input the paraments above
+            seed=self.world_map_seed,
+            name="world_map"
+        )
+        self.colony_map_seed=random.randint(1,2**32-1)
+        self.defaultColonyMap=initer.initalize_specific_colony(
+            pos=(5,5),
+            size=(100,100),
+            seed=self.colony_map_seed,
+            name="colony_main"
+        )
+        self.game_loop.world_manager.set_active_world("colony_main")
         """
-        test code
+        TEST CODE
         """
-        import game.components
-        world = self.game_loop.world_manager.get_active_world()
-        if world:
-            entity = world.create_entity(name="test")
-            entity.add_component(game.components.PositionComp(2, 2))
-            entity.add_component(game.components.SpriteComp())
-            entity.add_component(game.components.AttributeComp(speed=0.1))
+        entity=self.defaultColonyMap.create_entity("test")#type:ignore
+        from game.components import MovementComp,PositionComp,AttributeComp,SpriteComp
+        entity.add_component(PositionComp(0,0))
+        entity.add_component(MovementComp(0,0))
+        entity.add_component(AttributeComp(0.1))
+        entity.add_component(SpriteComp())
         """
-        test code
+        /TEST CODE
         """
         self._connect_signals()
         self._connect_buttons()

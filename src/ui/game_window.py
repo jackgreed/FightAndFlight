@@ -3,6 +3,18 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPainter, QColor,QPixmap
 TILE_SIZE=32
+TERRAIN_COLORS = {
+    "plain": "#4f6f3a",
+    "grass": "#3f8f3a",
+    "dry_plain": "#8a7a45",
+    "desert": "#b99b55",
+    "snow": "#d8e2e6",
+    "ice": "#9ccfd8",
+    "rock": "#5d5f63",
+    "ore": "#7a6a8f",
+    "water": "#245c8f",
+    "forest": "#245f32",
+}
 class GameWindow(QWidget):
     player_command = pyqtSignal(dict)  
     def __init__(self, parent=None):
@@ -36,6 +48,8 @@ class GameWindow(QWidget):
         if self._render_data is None:            
             return
         camera=self._render_data.get("camera")
+        for tile in self._render_data.get("tiles",[]):
+            self._draw_tile(painter,tile)
         if camera is not None:
             self._draw_grid(painter=painter,camera=camera)
         for sprite in self._render_data.get("sprites",[]):
@@ -51,6 +65,21 @@ class GameWindow(QWidget):
             if sprite.get("is_selected",False):
                 painter.setPen(QColor("white"))
                 painter.drawRect(x,y,size,size)
+    def _draw_tile(self,painter:QPainter,tile:dict):
+        """
+        draw a terrain tile by terrain type
+        """
+        import math
+        left = math.floor(tile.get("screen_left", 0))
+        top = math.floor(tile.get("screen_top", 0))
+        right = math.ceil(tile.get("screen_right", left))
+        bottom = math.ceil(tile.get("screen_bottom", top))
+        width = right - left
+        height = bottom - top
+        if width <= 0 or height <= 0:
+            return
+        terrain_type=tile.get("terrain_type","plain")
+        painter.fillRect(left,top,width,height,QColor(TERRAIN_COLORS.get(terrain_type,"#4f6f3a")))
     def _button_name(self,button):
         """
         transform QT mouse number to English word

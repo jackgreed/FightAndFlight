@@ -49,8 +49,8 @@ class ColonyView(GameView):
             # 处理鼠标移动事件
             if self.mouse_pressed and self.last_mouse_pos is not None:
                 # 如果鼠标按下，进行拖拽操作
-                new_x = self.current_pos[0] + cmd["pos"][0] - self.last_mouse_pos[0]
-                new_y = self.current_pos[1] + cmd["pos"][1] - self.last_mouse_pos[1]
+                new_x = self.current_pos[0] - cmd["pos"][0] + self.last_mouse_pos[0]
+                new_y = self.current_pos[1] - cmd["pos"][1] + self.last_mouse_pos[1]
                 self.current_pos = (new_x, new_y)
                 self.last_mouse_pos = cmd["pos"]
         elif cmd_type == "mouse_release":
@@ -85,6 +85,7 @@ class ColonyView(GameView):
                     "offset": self.current_pos,
                     "zoom": self.zoom_level,
                 },
+                "tiles": [],
                 "sprites": [],
             }
         cam_x,cam_y=self.current_pos
@@ -96,12 +97,14 @@ class ColonyView(GameView):
         visible_bottom=cam_y+viewport_h/zoom
         world_snapshot=self._world_snapshot.get(self.world_id,{})
         entities=world_snapshot.get("entities",{})
+        tiles=[]
         sprites=[]
         for entity_id,entity_data in entities.items():
             components=entity_data.get("components",{})
             pos=components.get("PositionComp")
+            tile=components.get("TileComp")
             sprite=components.get("SpriteComp")
-            if pos is None or sprite is None:
+            if pos is None:
                 continue
             world_x = pos["x"] * TILE_SIZE
             world_y = pos["y"] * TILE_SIZE
@@ -116,21 +119,34 @@ class ColonyView(GameView):
             screen_x=(world_x-cam_x)*zoom
             screen_y=(world_y-cam_y)*zoom
             screen_size=world_size*zoom
-            sprites.append({
-                "entity_id": entity_id,
-                "screen_x": screen_x,
-                "screen_y": screen_y,
-                "screen_size": screen_size,
-                "image_path": sprite.get("image_path", ""),
-                "decoration_set": sprite.get("decoration_set", []),
-                "is_selected":entity_id==self.selected_entity_id,
-            })
+            if tile is not None:
+                screen_left = (world_x - cam_x) * zoom
+                screen_top = (world_y - cam_y) * zoom
+                screen_right = (world_x + world_size - cam_x) * zoom
+                screen_bottom = (world_y + world_size - cam_y) * zoom
+                tiles.append({
+                    "screen_left": screen_left,
+                    "screen_top": screen_top,
+                    "screen_right": screen_right,
+                    "screen_bottom": screen_bottom,
+                    "terrain_type": tile.get("terrain_type", "plain"),
+                })
+            if sprite is not None:
+                sprites.append({
+                    "screen_x": screen_x,
+                    "screen_y": screen_y,
+                    "screen_size": screen_size,
+                    "image_path": sprite.get("image_path", ""),
+                    "decoration_set": sprite.get("decoration_set", []),
+                    "is_selected":entity_id==self.selected_entity_id,
+                })
         return {
                 "view": "colony",
                 "camera": {
                     "offset": self.current_pos,
                     "zoom": self.zoom_level,
                 },
+                "tiles": tiles,
                 "sprites": sprites,
             }
     def on_enter(self) -> None:
