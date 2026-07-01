@@ -12,7 +12,7 @@ MainWindowLogic - 视图管理器
 """
 from PyQt5.QtCore import QObject
 import random
-from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView
+from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView,WorldMapView
 from engine.game_loop import GameLoopThread
 import game.systems as game_systems
 from game.map_initializer import MapInitializer
@@ -31,10 +31,11 @@ class MainWindowLogic(QObject):
         self.game_loop.tick_completed.connect(self._on_tick)
         # 视图注册表
         self._views: dict[str, GameView] = {
-            "colony": ColonyView(self),
+            "colony": ColonyView(),
             #"combat": CombatView(self.game_loop),
             #"diplomacy": DiplomacyView(self.game_loop),
             #"loot": LootView(self.game_loop),
+            "world_map":WorldMapView()
         }
         for view in self._views.values():
             view.set_command_queue(self.game_loop.command_queue)
@@ -94,6 +95,7 @@ class MainWindowLogic(QObject):
         mw.battle_button.clicked.connect(lambda: self._switch_view("combat"))
         mw.allies_button.clicked.connect(lambda: self._switch_view("diplomacy"))
         mw.inventory_button.clicked.connect(lambda: self._switch_view("loot"))
+        mw.world_map_button.clicked.connect(lambda: self._switch_view("world_map"))
 
     # ─── 输入路由 ─────────────────────────────────────────────────
 

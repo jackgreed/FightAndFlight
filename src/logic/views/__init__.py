@@ -8,3 +8,4 @@ from logic.views.colony_view import ColonyView
 from logic.views.combat_view import CombatView
 from logic.views.diplomacy_view import DiplomacyView
 from logic.views.loot_view import LootView
+from logic.views.world_map_view import WorldMapView

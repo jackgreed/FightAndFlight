@@ -15,6 +15,16 @@ TERRAIN_COLORS = {
     "water": "#245c8f",
     "forest": "#245f32",
 }
+WORLD_TERRAIN_COLORS = {
+    "water": "#28669B",
+    "snow": "#DDE7E9",
+    "mountain": "#777B7D",
+    "tundra": "#98A58D",
+    "desert": "#C9AD63",
+    "forest": "#315D3A",
+    "grass": "#6E9B4B",
+    "plain": "#8A9859",
+}
 class GameWindow(QWidget):
     player_command = pyqtSignal(dict)  
     def __init__(self, parent=None):
@@ -47,24 +57,57 @@ class GameWindow(QWidget):
         painter.fillRect(self.rect(),QColor("black")) 
         if self._render_data is None:            
             return
-        camera=self._render_data.get("camera")
-        for tile in self._render_data.get("tiles",[]):
-            self._draw_tile(painter,tile)
-        if camera is not None:
-            self._draw_grid(painter=painter,camera=camera)
-        for sprite in self._render_data.get("sprites",[]):
-            x=int(sprite["screen_x"])
-            y=int(sprite["screen_y"])
-            size=int(sprite["screen_size"])
-            image_path=str(sprite["image_path"])
-            pixmap=self._get_pixmap(image_path=image_path)
-            if pixmap is not None:
-                painter.drawPixmap(x, y, size, size, pixmap)
-            else:
-                painter.fillRect(x, y, size, size, QColor("blue"))
-            if sprite.get("is_selected",False):
-                painter.setPen(QColor("white"))
-                painter.drawRect(x,y,size,size)
+        view_type=self._render_data.get("view")
+        if view_type is None:
+            return
+        elif view_type == "colony":
+            camera=self._render_data.get("camera")
+            for tile in self._render_data.get("tiles",[]):
+                self._draw_tile(painter,tile)
+            if camera is not None:
+                self._draw_grid(painter=painter,camera=camera)
+            for sprite in self._render_data.get("sprites",[]):
+                x=int(sprite["screen_x"])
+                y=int(sprite["screen_y"])
+                size=int(sprite["screen_size"])
+                image_path=str(sprite["image_path"])
+                pixmap=self._get_pixmap(image_path=image_path)
+                if pixmap is not None:
+                    painter.drawPixmap(x, y, size, size, pixmap)
+                else:
+                    painter.fillRect(x, y, size, size, QColor("blue"))
+                if sprite.get("is_selected",False):
+                    painter.setPen(QColor("white"))
+                    painter.drawRect(x,y,size,size)        
+            return  
+        elif view_type=="worldmap":
+            camera=self._render_data.get("camera")
+            selected_world_tile=None
+            for world_tile in self._render_data.get("world_tiles",[]):
+                self._draw_world_tile(painter,world_tile)
+                if world_tile.get("is_selected",False):
+                    selected_world_tile=world_tile
+            if camera is not None:
+                self._draw_grid(painter=painter,camera=camera)
+            for sprite in self._render_data.get("world_sprites",[]):
+                x=int(sprite["screen_x"])
+                y=int(sprite["screen_y"])
+                size=int(sprite["screen_size"])
+                image_path=str(sprite["image_path"])
+                pixmap=self._get_pixmap(image_path=image_path)
+                if pixmap is not None:
+                    painter.drawPixmap(x, y, size, size, pixmap)
+                else:
+                    painter.fillRect(x, y, size, size, QColor("blue"))
+                if sprite.get("is_selected",False):
+                    painter.setPen(QColor("white"))
+                    painter.drawRect(x,y,size,size)        
+            if selected_world_tile is not None:
+                self._draw_world_tile_selection(painter,selected_world_tile)
+            selected_tile=self._render_data.get("selected_tile")
+            if selected_tile is not None:
+                self._draw_world_tile_info(painter,selected_tile)
+            return  
     def _draw_tile(self,painter:QPainter,tile:dict):
         """
         draw a terrain tile by terrain type
@@ -80,6 +123,72 @@ class GameWindow(QWidget):
             return
         terrain_type=tile.get("terrain_type","plain")
         painter.fillRect(left,top,width,height,QColor(TERRAIN_COLORS.get(terrain_type,"#4f6f3a")))
+    def _draw_world_tile(self,painter:QPainter,tile:dict):
+        import math
+        left = math.floor(tile.get("screen_left", 0))
+        top = math.floor(tile.get("screen_top", 0))
+        right = math.ceil(tile.get("screen_right", left))
+        bottom = math.ceil(tile.get("screen_bottom", top))
+        width = right - left
+        height = bottom - top
+        if width <= 0 or height <= 0:
+            return
+        terrain_type=tile.get("terrain_type","plain")
+        painter.fillRect(left,top,width,height,QColor(WORLD_TERRAIN_COLORS.get(terrain_type,"#4f6f3a")))
+    def _draw_world_tile_selection(self,painter:QPainter,tile:dict):
+        """
+        draw selected world tile border
+        """
+        import math
+        left=math.floor(tile.get("screen_left",0))
+        top=math.floor(tile.get("screen_top",0))
+        right=math.ceil(tile.get("screen_right",left))
+        bottom=math.ceil(tile.get("screen_bottom",top))
+        width=right-left
+        height=bottom-top
+        painter.setPen(QColor("white"))
+        painter.drawRect(
+            left,
+            top,
+            width,
+            height,
+        )
+    def _draw_world_tile_info(self,painter:QPainter,selected_tile:dict):
+        """
+        draw selected world tile information
+        """
+        position=selected_tile.get("position",{})
+        info=selected_tile.get("info",{})
+        lines=[
+            f"Position: {position.get('x', 0)}, {position.get('y', 0)}",
+            f"Terrain: {selected_tile.get('terrain_type', 'plain')}",
+            f"Elevation: {info.get('elevation', 0):.2f}",
+            f"Moisture: {info.get('moisture', 0):.2f}",
+            f"Temperature: {info.get('temperature', 0):.2f}",
+            f"Fertility: {info.get('fertility', 0):.2f}",
+            f"Forest: {info.get('forest', 0):.2f}",
+            f"Mineral: {info.get('mineral', 0):.2f}",
+            f"Water: {info.get('water', 0):.2f}",
+        ]
+        panel_x=12
+        panel_y=12
+        panel_width=230
+        line_height=18
+        panel_height=16+line_height*len(lines)
+        painter.fillRect(
+            panel_x,
+            panel_y,
+            panel_width,
+            panel_height,
+            QColor(6,9,24,220),
+        )
+        painter.setPen(QColor("white"))
+        for index,line in enumerate(lines):
+            painter.drawText(
+                panel_x+10,
+                panel_y+20+index*line_height,
+                line,
+            )
     def _button_name(self,button):
         """
         transform QT mouse number to English word

@@ -73,6 +73,10 @@ class MainWindow(QMainWindow):
         self.allies_button.setStyleSheet(BUTTON_STYLE)
         self.allies_button.setCursor(Qt.PointingHandCursor)#type:ignore
 
+        self.world_map_button = QPushButton("WORLD")
+        self.world_map_button.setStyleSheet(BUTTON_STYLE)
+        self.world_map_button.setCursor(Qt.PointingHandCursor)#type:ignore
+
         self.right_layout.addStretch()
         self.right_layout.addWidget(self.battle_button)
         self.right_layout.addStretch()
@@ -82,7 +86,9 @@ class MainWindow(QMainWindow):
         self.right_layout.addStretch()
         self.right_layout.addWidget(self.allies_button)
         self.right_layout.addStretch()
-
+        self.right_layout.addWidget(self.world_map_button)
+        self.right_layout.addStretch()
+        
         self.main_layout = QHBoxLayout()
         self.main_layout.setContentsMargins(0, 0, 0, 0)
         self.main_layout.setSpacing(0)
