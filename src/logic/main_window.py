@@ -16,6 +16,7 @@ from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootVie
 from engine.game_loop import GameLoopThread
 import game.systems as game_systems
 from game.map_initializer import MapInitializer
+from game.character import CharacterInitializer
 class MainWindowLogic(QObject):
     """UI <-> 游戏逻辑 的中介层，同时管理视图切换。"""
 
@@ -61,19 +62,18 @@ class MainWindowLogic(QObject):
             seed=self.colony_map_seed,
             name="colony_main"
         )
+        if self.defaultColonyMap is None:
+            return
         self.game_loop.world_manager.set_active_world("colony_main")
         self._connect_signals()
         self._connect_buttons()
         # 默认进入殖民地视图
         self._switch_view("colony")
-        """
-        test code
-        """
-        from game.character.test_code import test_init
-        test_init(self.game_loop.world_manager.get_active_world())#type: ignore
-        """
-        /test code
-        """
+        # spawn a user and a npc
+        self.character_initializer=CharacterInitializer()
+
+        self.user_entity=self.character_initializer.generate_pawn(self.defaultColonyMap,"player",None,True,"42")
+        self.npc_entity=self.character_initializer.generate_pawn(self.defaultColonyMap,"npc",None,False,None)
         self.game_loop.start()
 
     # ─── 信号连接 ─────────────────────────────────────────────────

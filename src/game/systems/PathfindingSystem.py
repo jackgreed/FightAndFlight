@@ -27,5 +27,8 @@ class PathfindingSystem(System):
                 request.target_y,
             )
 
-            path_comp.move_list = pathfinder.find_path(start, goal)
+            new_path = pathfinder.find_path(start, goal)
+            if (position.x, position.y) != start:
+                new_path.insert(0, start)
+            path_comp.move_list = new_path
             entity.remove_component(PathRequestComp)            

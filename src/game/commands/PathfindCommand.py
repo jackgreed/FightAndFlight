@@ -11,6 +11,7 @@ class PathfindCommand(Command):
         entity=world.get_entity(self.entity_id)
         if entity is None or not entity.has_component(PathComp):
             return
+        entity.get_component(PathComp).move_list.clear()
         entity.add_component(PathRequestComp(self.target_x,self.target_y))
     def to_dict(self) -> dict:
         return {

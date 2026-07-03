@@ -43,7 +43,7 @@ class ColonyView(GameView):
                                 grid[1]
                             )
                         )
-                    elif self._entity_has_component(self.selected_entity_id,"MovementComp"):
+                    else:
                         self._command_queue.push(
                             MovementCommand(
                                 self.world_id,
