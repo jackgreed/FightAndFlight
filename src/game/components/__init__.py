@@ -4,3 +4,6 @@ from game.components.MovementComp import MovementComp
 from game.components.AttributeComp import AttributeComp
 from game.components.WorldTileComp import WorldTileComp
 from game.components.TileComp import TileComp
+from game.components.CharacterComp import CharacterComp
+from game.components.PathComp import PathComp
+from game.components.PathRequestComp import PathRequestComp

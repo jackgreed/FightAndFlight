@@ -1,1 +1,2 @@
 from game.commands.MovementCommand import MovementCommand
+from game.commands.PathfindCommand import PathfindCommand

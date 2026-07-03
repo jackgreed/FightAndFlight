@@ -27,6 +27,7 @@ class MainWindowLogic(QObject):
         
         self._active_view: GameView | None = None
         self.game_loop=GameLoopThread(fps=30)
+        self.game_loop.add_system(game_systems.PathfindingSystem())
         self.game_loop.add_system(game_systems.MovementSystem())
         self.game_loop.tick_completed.connect(self._on_tick)
         # 视图注册表
@@ -61,22 +62,18 @@ class MainWindowLogic(QObject):
             name="colony_main"
         )
         self.game_loop.world_manager.set_active_world("colony_main")
-        """
-        TEST CODE
-        """
-        entity=self.defaultColonyMap.create_entity("test")#type:ignore
-        from game.components import MovementComp,PositionComp,AttributeComp,SpriteComp
-        entity.add_component(PositionComp(0,0))
-        entity.add_component(MovementComp(0,0))
-        entity.add_component(AttributeComp(0.1))
-        entity.add_component(SpriteComp())
-        """
-        /TEST CODE
-        """
         self._connect_signals()
         self._connect_buttons()
         # 默认进入殖民地视图
         self._switch_view("colony")
+        """
+        test code
+        """
+        from game.character.test_code import test_init
+        test_init(self.game_loop.world_manager.get_active_world())#type: ignore
+        """
+        /test code
+        """
         self.game_loop.start()
 
     # ─── 信号连接 ─────────────────────────────────────────────────

@@ -13,8 +13,10 @@ class Entity:
         return self.name
     def set_name(self, name: str):
         self.name = name
+        return self
     def add_component(self, component: Component):
         self.components[component.__class__.__name__] = component
+        return self
     def get_component(self, component_type: type[Component]) -> Component | None:
         return self.components.get(component_type.__name__)
     def has_component(self, component_type: type[Component]) -> bool:
@@ -22,6 +24,7 @@ class Entity:
     def remove_component(self, component_type: type[Component]):
         if component_type.__name__ in self.components:
             del self.components[component_type.__name__]
+        return self
     def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,

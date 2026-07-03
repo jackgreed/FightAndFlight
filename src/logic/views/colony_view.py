@@ -4,7 +4,7 @@ ColonyView - 战棋殖民视图
 处理殖民逻辑：建筑建造、资源管理、单位生产等。
 """
 from logic.views.base import GameView
-from game.commands import MovementCommand
+from game.commands import MovementCommand,PathfindCommand
 TILE_SIZE=32
 
 class ColonyView(GameView):
@@ -34,14 +34,24 @@ class ColonyView(GameView):
             if "pos" in cmd and cmd.get("button")=="right":
                 if self.selected_entity_id is not None and self._command_queue is not None:
                     grid=self._screen_to_grid(cmd["pos"])
-                    self._command_queue.push(
-                        MovementCommand(
-                            self.world_id,
-                            self.selected_entity_id,
-                            grid[0],
-                            grid[1],
+                    if self._entity_has_component(self.selected_entity_id,"PathComp"):
+                        self._command_queue.push(
+                            PathfindCommand(
+                                self.world_id,
+                                self.selected_entity_id,
+                                grid[0],
+                                grid[1]
+                            )
                         )
-                    )
+                    elif self._entity_has_component(self.selected_entity_id,"MovementComp"):
+                        self._command_queue.push(
+                            MovementCommand(
+                                self.world_id,
+                                self.selected_entity_id,
+                                grid[0],
+                                grid[1],
+                            )
+                        )
             if "pos" in cmd and cmd.get("button")=="middle":
                 self.mouse_pressed = True
                 self.last_mouse_pos = cmd["pos"]
@@ -184,3 +194,17 @@ class ColonyView(GameView):
             if int(pos["x"])==grid[0] and int(pos["y"])==grid[1]:
                 return entity_id
         return None
+    def _entity_has_component(
+    self,
+    entity_id: str,
+    component_name: str,
+) -> bool:
+        world_snapshot = self._world_snapshot.get(self.world_id, {})
+        entities = world_snapshot.get("entities", {})
+        entity_data = entities.get(entity_id)
+
+        if entity_data is None:
+            return False
+
+        components = entity_data.get("components", {})
+        return component_name in components
