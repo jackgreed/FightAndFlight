@@ -8,6 +8,7 @@ from game.components import (
     PositionComp,
     SpriteComp,
     TileComp,
+    NpcMovementComp
 )
 
 
@@ -28,13 +29,15 @@ class CharacterInitializer:
         character.add_component(PathComp())
         character.add_component(PositionComp(pos[0], pos[1]))
         character.add_component(SpriteComp())
+        if not is_player:
+            character.add_component(NpcMovementComp("wander"))
         return character
 
     def _find_possible_tiles(self, world: World) -> list[tuple[int, int]]:
         result: list[tuple[int, int]] = []
         for entity in world.get_entities_with(TileComp, PositionComp):
-            tile = entity.get_component(TileComp)
-            position = entity.get_component(PositionComp)
+            tile:TileComp = entity.get_component(TileComp)#type:ignore
+            position:PositionComp = entity.get_component(PositionComp)#type:ignore
             if tile is None or position is None or tile.move_cost >= 999:
                 continue
             result.append((int(position.x), int(position.y)))

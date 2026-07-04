@@ -14,7 +14,7 @@ from PyQt5.QtCore import QObject
 import random
 from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootView,WorldMapView
 from engine.game_loop import GameLoopThread
-import game.systems as game_systems
+from game.systems import MovementSystem,NpcMovementSystem,PathfindingSystem
 from game.map_initializer import MapInitializer
 from game.character import CharacterInitializer
 class MainWindowLogic(QObject):
@@ -28,8 +28,9 @@ class MainWindowLogic(QObject):
         
         self._active_view: GameView | None = None
         self.game_loop=GameLoopThread(fps=30)
-        self.game_loop.add_system(game_systems.PathfindingSystem())
-        self.game_loop.add_system(game_systems.MovementSystem())
+        self.game_loop.add_system(NpcMovementSystem())
+        self.game_loop.add_system(PathfindingSystem())
+        self.game_loop.add_system(MovementSystem())
         self.game_loop.tick_completed.connect(self._on_tick)
         # 视图注册表
         self._views: dict[str, GameView] = {

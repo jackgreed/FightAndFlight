@@ -1,7 +1,7 @@
 from ecs.component import Component
 from typing import Any
 class AttributeComp(Component):
-    def __init__(self,speed:float=1.0,specialMutiplier=None):
+    def __init__(self,speed:float=0.1,specialMutiplier=None):
         self.speed=speed
         self.specialMutiplier:dict[str,float]=specialMutiplier if specialMutiplier is not None else {}
     def to_dict(self) -> dict[str, Any]:

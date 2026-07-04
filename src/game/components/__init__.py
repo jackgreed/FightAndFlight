@@ -7,3 +7,4 @@ from game.components.TileComp import TileComp
 from game.components.CharacterComp import CharacterComp
 from game.components.PathComp import PathComp
 from game.components.PathRequestComp import PathRequestComp
+from game.components.NpcMovementComp import NpcMovementComp
