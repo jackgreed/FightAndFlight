@@ -10,4 +10,7 @@ class AttributeComp(Component):
                 }
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "AttributeComp":
-        return cls(speed=data["speed"],specialMutiplier=data["speicialMutiplier"])
+        return cls(
+            speed=data["speed"],
+            specialMutiplier=data.get("specialMutiplier", {}),
+        )

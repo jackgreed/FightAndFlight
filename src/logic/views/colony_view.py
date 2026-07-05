@@ -19,6 +19,7 @@ class ColonyView(GameView):
         self.mouse_pressed = False
         self.last_mouse_pos = None
         self.selected_entity_id=None
+        self._camera_initialized=False
     def handle_input(self, cmd: dict) -> None:
         """处理殖民视图下的用户输入。
 
@@ -98,15 +99,21 @@ class ColonyView(GameView):
                 "tiles": [],
                 "sprites": [],
             }
-        cam_x,cam_y=self.current_pos
         viewport_w,viewport_h=self._viewport_size#type:ignore
         zoom =self.zoom_level
+        world_snapshot=self._world_snapshot.get(self.world_id,{})
+        entities=world_snapshot.get("entities",{})
+        if not self._camera_initialized:
+            self._center_camera_on_player(
+                entities,
+                viewport_w,
+                viewport_h,
+            )
+        cam_x,cam_y=self.current_pos
         visible_left=cam_x
         visible_top=cam_y
         visible_right=cam_x+viewport_w/zoom
         visible_bottom=cam_y+viewport_h/zoom
-        world_snapshot=self._world_snapshot.get(self.world_id,{})
-        entities=world_snapshot.get("entities",{})
         tiles=[]
         sprites=[]
         for entity_id,entity_data in entities.items():
@@ -161,14 +168,40 @@ class ColonyView(GameView):
             }
     def on_enter(self) -> None:
         """进入殖民视图。"""
-        self.current_pos = (0, 0)
-        self.zoom_level = 1.0
+        if not self._camera_initialized:
+            self.current_pos = (0, 0)
+            self.zoom_level = 1.0
         self.selected_entity_id=None
-        pass
 
     def on_exit(self) -> None:
         """离开殖民视图。"""
         pass
+    def _center_camera_on_player(
+        self,
+        entities:dict,
+        viewport_width:int,
+        viewport_height:int,
+    )->None:
+        """Center the camera once when player snapshot data is available."""
+        for entity_data in entities.values():
+            components=entity_data.get("components",{})
+            character=components.get("CharacterComp")
+            position=components.get("PositionComp")
+            if (
+                character is None
+                or position is None
+                or character.get("character_type") is not True
+            ):
+                continue
+            zoom=max(self.zoom_level,0.01)
+            player_center_x=(float(position["x"])+0.5)*TILE_SIZE
+            player_center_y=(float(position["y"])+0.5)*TILE_SIZE
+            self.current_pos=(
+                max(0.0,player_center_x-viewport_width/(2*zoom)),
+                max(0.0,player_center_y-viewport_height/(2*zoom)),
+            )
+            self._camera_initialized=True
+            return
     def _screen_to_grid(self,pos:tuple[int,int])->tuple[int,int]:
         """
         transform screen x,y to world x,y

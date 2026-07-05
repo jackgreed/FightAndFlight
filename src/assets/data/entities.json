@@ -1,0 +1,48 @@
+{
+  "player": {
+    "name": "player",
+    "components": {
+      "AttributeComp": {
+        "speed": 0.1
+      },
+      "CharacterComp": {
+        "character_type": true,
+        "player_uuid": null
+      },
+      "PathComp": {
+        "move_list": []
+      },
+      "SpriteComp": {
+        "image_path": "images/player.png",
+        "decoration_set": []
+      }
+    }
+  },
+  "npc": {
+    "name": "npc",
+    "components": {
+      "AttributeComp": {
+        "speed": 0.1
+      },
+      "CharacterComp": {
+        "character_type": false,
+        "player_uuid": null
+      },
+      "PathComp": {
+        "move_list": []
+      },
+      "NpcMovementComp": {
+        "mode": "wander",
+        "target_entity_id": null,
+        "target_position": null,
+        "home_position": null,
+        "wander_radius": 5,
+        "decision_cooldown": 60
+      },
+      "SpriteComp": {
+        "image_path": "",
+        "decoration_set": []
+      }
+    }
+  }
+}

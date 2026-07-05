@@ -1,5 +1,5 @@
 import random
-
+from typing import Any
 from ecs import Entity, World
 from game.components import (
     AttributeComp,
@@ -10,11 +10,14 @@ from game.components import (
     TileComp,
     NpcMovementComp
 )
-
+from game.entity_templates import EntityTemplateLoader,EntityFactory
 
 class CharacterInitializer:
     """Create player and NPC entities on passable colony tiles."""
-
+    def __init__(self,loader:EntityTemplateLoader|None=None,factory:EntityFactory|None=None):
+        self.loader=loader if loader is not None else EntityTemplateLoader()
+        self.loader.load()
+        self.factory=factory if factory is not None else EntityFactory(self.loader)
     def _generate_character(
         self,
         world: World,
@@ -23,15 +26,26 @@ class CharacterInitializer:
         is_player: bool,
         player_uuid: str | None,
     ) -> Entity:
-        character = world.create_entity(name)
-        character.add_component(AttributeComp(1))
-        character.add_component(CharacterComp(is_player, player_uuid))
-        character.add_component(PathComp())
-        character.add_component(PositionComp(pos[0], pos[1]))
-        character.add_component(SpriteComp())
-        if not is_player:
-            character.add_component(NpcMovementComp("wander"))
-        return character
+        template_id = "player" if is_player else "npc"
+
+        overrides:dict[str,dict[str,Any]] = {
+            "PositionComp": {
+                "x": pos[0],
+                "y": pos[1],
+            }
+        }
+
+        if is_player:
+            overrides["CharacterComp"] = {
+                "player_uuid": player_uuid,
+            }
+
+        return self.factory.create_entity(
+            world=world,
+            template_id=template_id,
+            overrides=overrides,
+            name=name,
+        )
 
     def _find_possible_tiles(self, world: World) -> list[tuple[int, int]]:
         result: list[tuple[int, int]] = []

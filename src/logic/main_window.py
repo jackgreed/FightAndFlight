@@ -17,6 +17,9 @@ from engine.game_loop import GameLoopThread
 from game.systems import MovementSystem,NpcMovementSystem,PathfindingSystem
 from game.map_initializer import MapInitializer
 from game.character import CharacterInitializer
+from game.components import SpriteComp
+from pathlib import Path
+
 class MainWindowLogic(QObject):
     """UI <-> 游戏逻辑 的中介层，同时管理视图切换。"""
 
