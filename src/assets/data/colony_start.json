@@ -15,6 +15,14 @@
       "spawn": {
         "mode": "random_passable"
       }
+    },
+    {
+      "template_id":"tree",
+      "count_range":[10,20],
+      "name_prefix":"tree",
+      "spawn":{
+        "mode":"random_passable"
+      }
     }
   ]
 }

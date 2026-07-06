@@ -15,6 +15,11 @@
       "SpriteComp": {
         "image_path": "images/player.png",
         "decoration_set": []
+      },
+      "InventoryComp":{
+        "capacity":8,
+        "max_weight":20.0,
+        "slots":null
       }
     }
   },
@@ -44,5 +49,34 @@
         "decoration_set": []
       }
     }
+  },
+    "wood": {
+      "name": "wood",
+        "components": {
+          "ItemComp": {
+            "item_id": "wood",
+            "weight":1.0,
+            "category": "material"
+          },
+          "StackComp": {
+            "quantity": 1,
+            "max_quantity": 50
+          }
+        }
+  },
+  "tree":{
+    "name":"tree",
+    "components":{
+      "LootTableComp":{
+        "common_loot":{"wood":2.5},
+        "specialized_loot":{
+          "axe":{"wood":3.0}
+        }
+      },
+      "SpriteComp":{
+        "image_path": "images/tree.png",
+        "decoration_set": []
+      }
+    } 
   }
 }

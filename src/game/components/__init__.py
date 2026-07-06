@@ -8,3 +8,7 @@ from game.components.CharacterComp import CharacterComp
 from game.components.PathComp import PathComp
 from game.components.PathRequestComp import PathRequestComp
 from game.components.NpcMovementComp import NpcMovementComp
+from game.components.InventoryComp import InventoryComp
+from game.components.ItemComp import ItemComp
+from game.components.StackComp import StackComp
+from game.components.LootTableComp import LootTableComp

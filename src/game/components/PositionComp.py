@@ -1,6 +1,6 @@
 from ecs.component import Component
 class PositionComp(Component):
-    def __init__(self,x:int,y:int):
+    def __init__(self,x:int=0,y:int=0):
         self.x=x
         self.y=y
     def to_dict(self) -> dict[str, int]:
