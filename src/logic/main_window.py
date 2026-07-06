@@ -16,7 +16,11 @@ from logic.views import GameView, ColonyView, CombatView, DiplomacyView, LootVie
 from engine.game_loop import GameLoopThread
 from game.systems import MovementSystem,NpcMovementSystem,PathfindingSystem
 from game.map_initializer import MapInitializer
-from game.character import CharacterInitializer
+from game.entity_templates import (
+    EntityFactory,
+    EntityTemplateLoader,
+    SpawnInitializer,
+)
 from game.components import SpriteComp
 from pathlib import Path
 
@@ -72,12 +76,27 @@ class MainWindowLogic(QObject):
         self._connect_signals()
         self._connect_buttons()
         # 默认进入殖民地视图
-        self._switch_view("colony")
-        # spawn a user and a npc
-        self.character_initializer=CharacterInitializer()
 
-        self.user_entity=self.character_initializer.generate_pawn(self.defaultColonyMap,"player",None,True,"42")
-        self.npc_entity=self.character_initializer.generate_pawn(self.defaultColonyMap,"npc",None,False,None)
+        self.template_loader=EntityTemplateLoader()
+        self.template_loader.load()
+        self.entity_factory=EntityFactory(self.template_loader)
+        self.spawn_initializer=SpawnInitializer(factory=self.entity_factory,rng=random.Random(self.colony_map_seed))
+        self.initial_entities=self.spawn_initializer.spawn_all(
+            world=self.defaultColonyMap,
+            runtime_overrides={
+                "player":{
+                    "CharacterComp":{
+                        "player_uuid":"42"
+                    },
+                    "AttributeComp":{
+                        "speed":1
+                    }
+                }
+            }
+        )
+        #considering we may have situations like player use a satelite to observe another map,there will be no player entity on that map
+        #so no check for numbers of player entity
+        self._switch_view("colony")
         self.game_loop.start()
 
     # ─── 信号连接 ─────────────────────────────────────────────────

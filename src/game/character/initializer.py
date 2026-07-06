@@ -2,13 +2,11 @@ import random
 from typing import Any
 from ecs import Entity, World
 from game.components import (
-    AttributeComp,
-    CharacterComp,
-    PathComp,
+
     PositionComp,
-    SpriteComp,
+
     TileComp,
-    NpcMovementComp
+
 )
 from game.entity_templates import EntityTemplateLoader,EntityFactory
 
