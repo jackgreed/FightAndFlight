@@ -12,3 +12,4 @@ from game.components.InventoryComp import InventoryComp
 from game.components.ItemComp import ItemComp
 from game.components.StackComp import StackComp
 from game.components.LootTableComp import LootTableComp
+from game.components.InteractableComp import InteractableComp

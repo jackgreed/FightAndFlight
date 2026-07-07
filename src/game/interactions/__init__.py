@@ -1,0 +1,1 @@
+from game.interactions.action_registry import ACTION_REGISTRY

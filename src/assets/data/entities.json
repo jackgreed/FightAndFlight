@@ -76,6 +76,9 @@
       "SpriteComp":{
         "image_path": "images/tree.png",
         "decoration_set": []
+      },
+      "InteractableComp":{
+        "actions":{"chop":true,"inspect":true}
       }
     } 
   }
