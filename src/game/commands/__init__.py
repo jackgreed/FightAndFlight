@@ -1,2 +1,5 @@
 from game.commands.MovementCommand import MovementCommand
 from game.commands.PathfindCommand import PathfindCommand
+from game.commands.InspectCommand import InspectCommand
+from game.commands.CloseInfoPanelCommand import CloseInfoPanelCommand
+from game.commands.OpenInteractableMenuCommand import OpenInteractableMenuCommand

@@ -58,56 +58,119 @@ class GameWindow(QWidget):
         if self._render_data is None:            
             return
         view_type=self._render_data.get("view")
-        if view_type is None:
-            return
-        elif view_type == "colony":
-            camera=self._render_data.get("camera")
-            for tile in self._render_data.get("tiles",[]):
-                self._draw_tile(painter,tile)
-            if camera is not None:
-                self._draw_grid(painter=painter,camera=camera)
-            for sprite in self._render_data.get("sprites",[]):
-                x=int(sprite["screen_x"])
-                y=int(sprite["screen_y"])
-                size=int(sprite["screen_size"])
-                image_path=str(sprite["image_path"])
-                pixmap=self._get_pixmap(image_path=image_path)
-                if pixmap is not None:
-                    painter.drawPixmap(x, y, size, size, pixmap)
-                else:
-                    painter.fillRect(x, y, size, size, QColor("blue"))
-                if sprite.get("is_selected",False):
-                    painter.setPen(QColor("white"))
-                    painter.drawRect(x,y,size,size)        
-            return  
+        if view_type == "colony":
+            self._draw_colony_view(painter,self._render_data)
         elif view_type=="worldmap":
-            camera=self._render_data.get("camera")
-            selected_world_tile=None
-            for world_tile in self._render_data.get("world_tiles",[]):
-                self._draw_world_tile(painter,world_tile)
-                if world_tile.get("is_selected",False):
-                    selected_world_tile=world_tile
-            if camera is not None:
-                self._draw_grid(painter=painter,camera=camera)
-            for sprite in self._render_data.get("world_sprites",[]):
-                x=int(sprite["screen_x"])
-                y=int(sprite["screen_y"])
-                size=int(sprite["screen_size"])
-                image_path=str(sprite["image_path"])
-                pixmap=self._get_pixmap(image_path=image_path)
-                if pixmap is not None:
-                    painter.drawPixmap(x, y, size, size, pixmap)
-                else:
-                    painter.fillRect(x, y, size, size, QColor("blue"))
-                if sprite.get("is_selected",False):
-                    painter.setPen(QColor("white"))
-                    painter.drawRect(x,y,size,size)        
-            if selected_world_tile is not None:
-                self._draw_world_tile_selection(painter,selected_world_tile)
-            selected_tile=self._render_data.get("selected_tile")
-            if selected_tile is not None:
-                self._draw_world_tile_info(painter,selected_tile)
-            return  
+            self._draw_world_map_view(painter,self._render_data)
+
+    def _draw_colony_view(self,painter:QPainter,data:dict):
+        """
+        draw colony view layers.
+        """
+        camera=data.get("camera")
+        for tile in data.get("tiles",[]):
+            self._draw_tile(painter,tile)
+        if camera is not None:
+            self._draw_grid(painter=painter,camera=camera)
+        for sprite in data.get("sprites",[]):
+            self._draw_sprite(painter,sprite)
+        info_panel=data.get("info_panel")
+        if info_panel is not None:
+            self._draw_info_panel(painter,info_panel)
+
+    def _draw_world_map_view(self,painter:QPainter,data:dict):
+        """
+        draw world map view layers.
+        """
+        camera=data.get("camera")
+        selected_world_tile=None
+        for world_tile in data.get("world_tiles",[]):
+            self._draw_world_tile(painter,world_tile)
+            if world_tile.get("is_selected",False):
+                selected_world_tile=world_tile
+        if camera is not None:
+            self._draw_grid(painter=painter,camera=camera)
+        for sprite in data.get("world_sprites",[]):
+            self._draw_sprite(painter,sprite)
+        if selected_world_tile is not None:
+            self._draw_world_tile_selection(painter,selected_world_tile)
+        selected_tile=data.get("selected_tile")
+        if selected_tile is not None:
+            self._draw_world_tile_info(painter,selected_tile)
+
+    def _draw_sprite(self,painter:QPainter,sprite:dict):
+        """
+        draw sprite image or fallback color block.
+        """
+        x=int(sprite["screen_x"])
+        y=int(sprite["screen_y"])
+        size=int(sprite["screen_size"])
+        image_path=str(sprite["image_path"])
+        pixmap=self._get_pixmap(image_path=image_path)
+        if pixmap is not None:
+            painter.drawPixmap(x, y, size, size, pixmap)
+        else:
+            painter.fillRect(x, y, size, size, QColor("blue"))
+        if sprite.get("is_selected",False):
+            painter.setPen(QColor("white"))
+            painter.drawRect(x,y,size,size)
+
+    def _draw_info_panel(self,painter:QPainter,panel:dict):
+        """
+        draw info panel overlay.
+        """
+        rect=panel.get("rect",[12,12,320,180])
+        close_rect=panel.get("close_rect",[306,20,18,18])
+        x,y,width,height=[int(value) for value in rect]
+        close_x,close_y,close_width,close_height=[
+            int(value) for value in close_rect
+        ]
+
+        painter.fillRect(x,y,width,height,QColor(6,9,24,220))
+        painter.setPen(QColor("white"))
+        painter.drawRect(x,y,width,height)
+        painter.drawText(x+10,y+22,str(panel.get("title","")))
+
+        painter.fillRect(
+            close_x,
+            close_y,
+            close_width,
+            close_height,
+            QColor(80,30,30,230),
+        )
+        painter.setPen(QColor("white"))
+        painter.drawRect(close_x,close_y,close_width,close_height)
+        painter.drawText(close_x+5,close_y+14,"X")
+
+        actions=panel.get("actions")
+        if actions:
+            self._draw_info_panel_actions(painter,actions)
+            return
+
+        line_y=y+48
+        for line in str(panel.get("info","")).splitlines():
+            painter.drawText(x+10,line_y,line[:80])
+            line_y+=18
+            if line_y>y+height-10:
+                break
+
+    def _draw_info_panel_actions(self,painter:QPainter,actions:list):
+        """
+        draw interaction action buttons.
+        """
+        for action in actions:
+            rect=action.get("rect")
+            if rect is None:
+                continue
+            x,y,width,height=[int(value) for value in rect]
+            painter.fillRect(x,y,width,height,QColor(30,45,70,230))
+            painter.setPen(QColor("white"))
+            painter.drawRect(x,y,width,height)
+            painter.drawText(
+                x+8,
+                y+16,
+                str(action.get("label",action.get("action_id",""))),
+            )
     def _draw_tile(self,painter:QPainter,tile:dict):
         """
         draw a terrain tile by terrain type
@@ -241,7 +304,6 @@ class GameWindow(QWidget):
             return
         screen_tile_size=TILE_SIZE*zoom
         if screen_tile_size < 20:
-            print("[INFO] tile size to small,skipping grid draw")
             return
         visible_left = cam_x
         visible_top = cam_y

@@ -13,8 +13,8 @@ class MovementCommand(Command):
         if entity is not None:
             if entity.has_component(MovementComp):
                 movement_comp = entity.get_component(MovementComp)
-                movement_comp.target_x = self.target_x
-                movement_comp.target_y = self.target_y
+                movement_comp.target_x = self.target_x#type:ignore
+                movement_comp.target_y = self.target_y#type:ignore
             else:
                 entity.add_component(MovementComp(target_x=self.target_x, target_y=self.target_y))
 
