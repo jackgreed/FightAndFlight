@@ -2,7 +2,8 @@ from typing import Any
 
 from ecs import World
 from engine.command_queue import Command
-from game.components import InfoPanelComp, InteractableComp
+from game.components import InfoPanelComp
+from game.interactions import ActionProxy
 
 
 class OpenInteractableMenuCommand(Command):
@@ -16,15 +17,10 @@ class OpenInteractableMenuCommand(Command):
         if target is None:
             return
 
-        interactable = target.get_component(InteractableComp)
-        if interactable is None:
+        if not ActionProxy.is_interactable(target):
             return
 
-        actions = [
-            action_id
-            for action_id, enabled in interactable.actions.items()
-            if enabled
-        ]
+        actions = ActionProxy.get_enabled_action_ids(target)
         actions.append("move_to")
         if not actions:
             return

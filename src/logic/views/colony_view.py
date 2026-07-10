@@ -4,13 +4,12 @@ ColonyView - 战棋殖民视图
 处理殖民逻辑：建筑建造、资源管理、单位生产等。
 """
 from logic.views.base import GameView
+from logic.views.colony_input import handle_colony_input
 from game.commands import (
-    CloseInfoPanelCommand,
-    OpenInteractableMenuCommand,
     MovementCommand,
     PathfindCommand,
-    InspectCommand
 )
+from game.interactions import ActionProxy
 TILE_SIZE=32
 
 class ColonyView(GameView):
@@ -20,10 +19,6 @@ class ColonyView(GameView):
     def __init__(self,world_id:str="colony_main"):
         super().__init__()
         self.world_id=world_id
-        self.current_pos = (0, 0)
-        self.zoom_level = 1.0
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
         self.selected_entity_id=None
         self._interaction_target_entity_id=None
         self._entities_by_grid={}
@@ -54,207 +49,13 @@ class ColonyView(GameView):
 
         TODO: 实现殖民操作逻辑（建造建筑、管理资源、生产单位等）
         """
-        cmd_type = cmd.get("type")
-        
-        if cmd_type == "mouse_press":
-            self._handle_mouse_press(cmd)
-        elif cmd_type == "mouse_move":
-            self._handle_mouse_move(cmd)
-        elif cmd_type == "mouse_release":
-            self._handle_mouse_release(cmd)
-        elif cmd_type == "key_press":
-            self._handle_key_press(cmd)
-        elif cmd_type == "wheel":
-            self._handle_wheel(cmd)
-        else:
-            print(f"Unknown input type: {cmd_type}")
-
-    def _handle_mouse_press(self, cmd: dict) -> None:
-        """Route mouse press input by button."""
-        pos = cmd.get("pos")
-        button = cmd.get("button")
-        if pos is None:
-            return
-
-        if button == "left":
-            self._handle_left_click(pos)
-        elif button == "right":
-            self._handle_right_click(pos)
-        elif button == "middle":
-            self._start_camera_drag(pos)
-
-    def _handle_left_click(self, pos: tuple[int, int]) -> None:
-        """Handle selection and overlay clicks."""
-        if self._handle_interaction_panel_click(pos):
-            return
-
-        if self._handle_info_panel_click(pos):
-            return
-
-        grid = self._screen_to_grid(pos)
-        self.selected_entity_id = self._select_entity_at_grid(grid)
-
-    def _handle_right_click(self, pos: tuple[int, int]) -> None:
-        """Handle interactable target or selected entity movement."""
-        if self._command_queue is None:
-            return
-
-        grid = self._screen_to_grid(pos)
-        interactable_entity_id = self._get_interactable_entity_at_grid(grid)
-        if interactable_entity_id is not None:
-            self._interaction_target_entity_id = interactable_entity_id
-            self._command_queue.push(
-                OpenInteractableMenuCommand(
-                    self.world_id,
-                    interactable_entity_id,
-                )
-            )
-            return
-
-        if self.selected_entity_id is None:
-            return
-        self._interaction_target_entity_id = None
-
-        self._push_move_command(self.selected_entity_id, grid)
-
-    def _start_camera_drag(self, pos: tuple[int, int]) -> None:
-        """Start middle-button camera drag."""
-        self.mouse_pressed = True
-        self.last_mouse_pos = pos
-
-    def _handle_mouse_move(self, cmd: dict) -> None:
-        """Handle camera drag movement."""
-        if not self.mouse_pressed or self.last_mouse_pos is None:
-            return
-        pos = cmd.get("pos")
-        if pos is None:
-            return
-
-        new_x = self.current_pos[0] - pos[0] + self.last_mouse_pos[0]
-        new_y = self.current_pos[1] - pos[1] + self.last_mouse_pos[1]
-        self.current_pos = (new_x, new_y)
-        self.last_mouse_pos = pos
-
-    def _handle_mouse_release(self, cmd: dict) -> None:
-        """Stop mouse drag state."""
-        self.mouse_pressed = False
-        self.last_mouse_pos = None
-
-    def _handle_key_press(self, cmd: dict) -> None:
-        """Handle keyboard input."""
-        pass
-
-    def _handle_wheel(self, cmd: dict) -> None:
-        """Handle mouse wheel zoom."""
-        delta = cmd.get("delta")
-        if delta is None:
-            return
-        if delta > 0:
-            self.zoom_level *= 1.1
-        if delta < 0:
-            self.zoom_level /= 1.1
-        self.zoom_level = max(0.25, min(self.zoom_level, 4.0))
-
-    def _handle_info_panel_click(self, pos: tuple[int, int]) -> bool:
-        """Close info panel when clicking its close rect."""
-        panel = self._get_current_info_panel()
-        if panel is None:
-            return False
-
-        close_rect = panel.get("close_rect")
-        if close_rect is None:
-            return False
-
-        if not self._point_in_rect(pos, close_rect):
-            return False
-
-        if self._command_queue is not None:
-            self._command_queue.push(
-                CloseInfoPanelCommand(
-                    self.world_id,
-                    panel.get("panel_id", "panel"),
-                )
-            )
-
-        return True
-
-    def _handle_interaction_panel_click(self, pos: tuple[int, int]) -> bool:
-        """Handle action clicks on the interaction menu."""
-        panel = self._get_current_info_panel()
-        if panel is None or panel.get("panel_id") != "interaction_menu":
-            return False
-
-        for action in panel.get("actions", []):
-            action_rect = action.get("rect")
-            if action_rect is None:
-                continue
-            if not self._point_in_rect(pos, action_rect):
-                continue
-            if action.get("action_id") == "inspect":
-                self._push_inspect_interaction()
-            if action.get("action_id") == "move_to":
-                self._push_move_to_interaction()
-            return True
-
-        return False
-
-    def _push_inspect_interaction(self) -> None:
-        """Push inspect command for the active interaction target."""
-        if (
-            self._command_queue is None
-            or self._interaction_target_entity_id is None
-        ):
-            return
-
-        self._command_queue.push(
-            InspectCommand(
-                self.world_id,
-                self._interaction_target_entity_id,
-            )
-        )
-
-    def _push_move_to_interaction(self) -> None:
-        """Move selected entity to the active interaction target."""
-        if (
-            self.selected_entity_id is None
-            or self._interaction_target_entity_id is None
-        ):
-            return
-
-        grid = self._get_entity_grid(self._interaction_target_entity_id)
-        if grid is None:
-            return
-
-        self._push_move_command(self.selected_entity_id, grid)
-        self._close_interaction_menu()
-
-    def _close_interaction_menu(self) -> None:
-        """Close active interaction menu panel."""
-        if self._command_queue is None:
-            return
-
-        self._command_queue.push(
-            CloseInfoPanelCommand(
-                self.world_id,
-                "interaction_menu",
-            )
-        )
+        handle_colony_input(self, cmd)
 
     def _get_current_info_panel(self) -> dict | None:
         """Return active info panel render data."""
         world_snapshot = self._world_snapshot.get(self.world_id, {})
         entities = world_snapshot.get("entities", {})
         return self._get_info_panel_render_data(entities)
-
-    @staticmethod
-    def _point_in_rect(pos: tuple[int, int], rect: list) -> bool:
-        """Return whether screen pos is inside rect."""
-        x, y = pos
-        rect_x, rect_y, width, height = [int(value) for value in rect]
-        return (
-            rect_x <= x <= rect_x + width
-            and rect_y <= y <= rect_y + height
-        )
 
     def get_render_data(self) -> dict:
         """返回殖民画面的渲染数据。
@@ -382,16 +183,6 @@ class ColonyView(GameView):
             )
             self._camera_initialized=True
             return
-    def _screen_to_grid(self,pos:tuple[int,int])->tuple[int,int]:
-        """
-        transform screen x,y to world x,y
-        """
-        if self.zoom_level <= 0:
-            return (0, 0)
-        screen_x,screen_y=pos
-        world_x=self.current_pos[0]+screen_x/self.zoom_level
-        world_y=self.current_pos[1]+screen_y/self.zoom_level
-        return (int(world_x//TILE_SIZE),int(world_y//TILE_SIZE))
     def _get_entity_at_grid(self,grid:tuple[int,int])->str|None:
         """
         find the entity_id accroding to the given pos
@@ -547,7 +338,7 @@ class ColonyView(GameView):
             top = action_y + len(actions) * (action_height + action_gap)
             actions.append({
                 "action_id": action_id,
-                "label": action_id,
+                "label": ActionProxy.get_label(action_id),
                 "rect": [
                     action_x,
                     top,

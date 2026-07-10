@@ -1,1 +1,1 @@
-from game.interactions.action_registry import ACTION_REGISTRY
+from game.interactions.action_proxy import ActionProxy

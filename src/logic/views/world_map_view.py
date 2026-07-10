@@ -11,10 +11,6 @@ class WorldMapView(GameView):
     def __init__(self,world_id:str="world_map"):
         super().__init__()
         self.world_id=world_id
-        self.current_pos=(0,0)
-        self.zoom_level=1.0
-        self.mouse_pressed=False
-        self.last_mouse_pos = None
         self.selected_entity_id=None
     def handle_input(self, cmd: dict) -> None:
         """
@@ -37,28 +33,13 @@ class WorldMapView(GameView):
                         )
                     )
             if "pos" in cmd and cmd.get("button")=="middle":
-                self.mouse_pressed = True
-                self.last_mouse_pos = cmd["pos"]
+                self._start_camera_drag(cmd["pos"])
         elif cmd_type=="mouse_move":
-            # 处理鼠标移动事件
-            if self.mouse_pressed and self.last_mouse_pos is not None:
-                # 如果鼠标按下，进行拖拽操作
-                new_x = self.current_pos[0] - cmd["pos"][0] + self.last_mouse_pos[0]
-                new_y = self.current_pos[1] - cmd["pos"][1] + self.last_mouse_pos[1]
-                self.current_pos = (new_x, new_y)
-                self.last_mouse_pos = cmd["pos"]
+            self._handle_camera_drag(cmd.get("pos"))
         elif cmd_type=="mouse_release":
-            self.mouse_pressed = False
-            self.last_mouse_pos = None
+            self._stop_camera_drag()
         elif cmd_type=="wheel":
-            if "delta" in cmd:
-                # 处理鼠标滚轮事件
-                delta = cmd["delta"]
-                if delta > 0:
-                    self.zoom_level *= 1.1  # 放大
-                if delta < 0:
-                    self.zoom_level /= 1.1  # 缩小
-                self.zoom_level = max(0.25, min(self.zoom_level, 4.0))
+            self._handle_wheel_zoom(cmd.get("delta"))
         else:
             print(f"Unknown input type: {cmd_type}")
     def get_render_data(self) -> dict:
@@ -181,16 +162,6 @@ class WorldMapView(GameView):
     def on_exit(self) -> None:
         """leave"""
         pass
-    def _screen_to_grid(self,pos:tuple[int,int])->tuple[int,int]:
-        """
-        transform screen x,y to world x,y
-        """
-        if self.zoom_level <= 0:
-            return (0, 0)
-        screen_x,screen_y=pos
-        world_x=self.current_pos[0]+screen_x/self.zoom_level
-        world_y=self.current_pos[1]+screen_y/self.zoom_level
-        return (int(world_x//TILE_SIZE),int(world_y//TILE_SIZE))
     def _get_entity_at_grid(self,grid:tuple[int,int])->str|None:
         """
         find the entity_id accroding to the given pos
