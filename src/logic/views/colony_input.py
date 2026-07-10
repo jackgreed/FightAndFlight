@@ -131,9 +131,12 @@ def _push_action_interaction(view, action_id: str) -> None:
 
     command = ActionProxy.create_command(
         action_id=action_id,
-        world_id=view.world_id,
-        actor_entity_id=view.selected_entity_id,
-        target_entity_id=view._interaction_target_entity_id,
+        data={
+            "world_id": view.world_id,
+            "actor_entity_id": view.selected_entity_id,
+            "target_entity_id": view._interaction_target_entity_id,
+            "entity_id": view._interaction_target_entity_id,
+        },
     )
     if command is not None:
         view._command_queue.push(command)

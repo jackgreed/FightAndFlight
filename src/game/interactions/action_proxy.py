@@ -1,3 +1,6 @@
+import inspect
+
+from engine.command_queue import COMMAND_REGISTRY
 from game.components import InteractableComp
 from game.interactions.action_registry import ACTION_REGISTRY
 
@@ -33,32 +36,27 @@ class ActionProxy:
         return action.label
 
     @classmethod
-    def _get_command_type(cls, command_type: str):
-        """Resolve command class lazily to avoid package import cycles."""
-        if command_type == "InspectCommand":
-            from game.commands.InspectCommand import InspectCommand
-            return InspectCommand
-        return None
-
-    @classmethod
     def create_command(
         cls,
         action_id: str,
-        world_id: str,
-        actor_entity_id: str | None,
-        target_entity_id: str,
-        args: dict | None = None,
+        data: dict,
     ):
-        """Create command for action id."""
+        """Create command for action id from provided data."""
         action = ACTION_REGISTRY.get(action_id)
         if action is None:
             return None
 
-        command_cls = cls._get_command_type(action.command_type)
+        command_cls = COMMAND_REGISTRY.get(action.command_type)
         if command_cls is None:
             return None
 
-        if action.command_type == "InspectCommand":
-            return command_cls(world_id, target_entity_id)
+        command_args = {}
+        parameters = inspect.signature(command_cls).parameters
+        for name, parameter in parameters.items():
+            if name in data:
+                command_args[name] = data[name]
+                continue
+            if parameter.default is inspect.Parameter.empty:
+                return None
 
-        return None
+        return command_cls(**command_args)

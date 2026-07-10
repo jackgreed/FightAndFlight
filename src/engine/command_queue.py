@@ -2,7 +2,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 from ecs.world import World
+
+COMMAND_REGISTRY: dict[str, type["Command"]] = {}
+
+
 class Command(ABC):
+    def __init_subclass__(cls, **kwargs):
+        """Register concrete Command subclasses by class name."""
+        super().__init_subclass__(**kwargs)
+        COMMAND_REGISTRY[cls.__name__] = cls
+
     @abstractmethod
     def __init__(self,world_id:str,*args,**kwargs):
         self.world_id=world_id
