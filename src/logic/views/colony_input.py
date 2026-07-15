@@ -140,6 +140,7 @@ def _push_action_interaction(view, action_id: str) -> None:
     )
     if command is not None:
         view._command_queue.push(command)
+        _close_interaction_menu(view)
 
 
 def _push_move_to_interaction(view) -> None:

@@ -14,3 +14,4 @@ from game.components.StackComp import StackComp
 from game.components.LootTableComp import LootTableComp
 from game.components.InteractableComp import InteractableComp
 from game.components.InfoPanelComp import InfoPanelComp
+from game.components.LootRequestComp import LootRequestComp
